@@ -1,0 +1,1184 @@
+-----------------------------------------------------------------------------------------------------------------------------------------------------------
+#Assign1 Data Preprocessing
+------------------------------------------------------------------------------------------------------------------------------------------------------
+
+# 1. Import Libraries
+import pandas as pd
+import numpy as np
+import matplotlib.pyplot as plt
+import seaborn as sns
+
+from sklearn.datasets import load_iris
+
+iris = load_iris()
+
+
+# 2. Create DataFrame
+df = pd.DataFrame(
+    iris.data,
+    columns=iris.feature_names
+)
+
+df['Species'] = iris.target
+
+df.head()
+
+
+# 3. Shape of Dataset
+df.shape
+
+
+# 4. Column Names
+df.columns
+
+
+# 5. Dataset Information
+df.info()
+
+
+# 6. Statistical Summary
+df.describe()
+
+
+# 7. Check Null Values
+df.isnull().sum()
+
+
+# 8. Drop Null Values
+df.dropna()
+
+
+# 9. Fill Missing Values for Numerical Columns
+num_cols = df.select_dtypes(
+    include=['int64', 'float64']
+).columns
+
+for col in num_cols:
+    df[col] = df[col].fillna(df[col].mean())
+
+
+# 10. Fill Missing Values for Categorical Columns
+cat_cols = ['Species']
+
+for col in cat_cols:
+    df[col] = df[col].fillna(df[col].mode()[0])
+
+
+# 11. Check Duplicate Values
+df.duplicated().sum()
+
+
+# 12. Remove Duplicate Values
+df = df.drop_duplicates()
+
+
+# 13. Encoding Categorical Data
+from sklearn.preprocessing import LabelEncoder
+
+le = LabelEncoder()
+
+df['Species'] = le.fit_transform(df['Species'])
+
+df.head()
+
+
+# 14. Min-Max Scaling
+from sklearn.preprocessing import MinMaxScaler
+
+scaler = MinMaxScaler()
+
+df_scaled = pd.DataFrame(
+    scaler.fit_transform(df),
+    columns=df.columns
+)
+
+df_scaled.head()
+
+
+# 15. Standardization Z-Score
+from sklearn.preprocessing import StandardScaler
+
+std_scaler = StandardScaler()
+
+df_standard = pd.DataFrame(
+    std_scaler.fit_transform(df),
+    columns=df.columns
+)
+
+df_standard.head()
+
+
+# 16. Histogram
+df.hist(figsize=(12,10))
+plt.show()
+
+
+# 17. Boxplot
+plt.figure(figsize=(12,6))
+df.boxplot()
+plt.xticks(rotation=90)
+plt.show()
+
+
+# 18. Correlation Heatmap
+plt.figure(figsize=(12,8))
+sns.heatmap(df.corr(), annot=True, cmap='coolwarm')
+plt.show()
+
+
+# 19. Save Processed Dataset
+df.to_csv("iris_processed.csv", index=False)
+
+-------------------------------------------------------------------------------------------------------------------------------------------------
+#Assignment 2
+------------------------------------------------------------------------------------------------------------------------------------------------------
+# Import Libraries
+import pandas as pd
+import matplotlib.pyplot as plt
+import seaborn as sns
+
+from sklearn.datasets import load_iris
+from sklearn.model_selection import train_test_split
+from sklearn.preprocessing import StandardScaler
+from sklearn.neighbors import KNeighborsClassifier
+from sklearn.naive_bayes import GaussianNB
+from sklearn.metrics import accuracy_score, confusion_matrix, classification_report
+
+# Load Iris Dataset
+
+
+iris = load_iris()
+
+X = iris.data
+y = iris.target
+
+df = pd.DataFrame(X, columns=iris.feature_names)
+df['Species'] = y
+
+print(df.head())
+
+
+
+# Dataset Information
+
+print(df.shape)
+print(df.info())
+print(df.describe())
+
+
+# Replace Null Values with Mean
+
+
+df.fillna(df.mean(numeric_only=True), inplace=True)
+
+print(df.isnull().sum())
+
+
+
+# Correlation Heatmap
+
+
+plt.figure(figsize=(8,6))
+sns.heatmap(df.corr(), annot=True, cmap='coolwarm')
+plt.title("Correlation Heatmap")
+plt.show()
+
+# Univariate Analysis
+
+plt.hist(df['sepal length (cm)'])
+plt.title("Sepal Length Distribution")
+plt.xlabel("Sepal Length")
+plt.ylabel("Frequency")
+plt.show()
+
+sns.boxplot(x=df['petal length (cm)'])
+plt.title("Petal Length Boxplot")
+plt.show()
+
+
+# Bivariate Analysis
+
+plt.scatter(df['sepal length (cm)'], df['petal length (cm)'])
+plt.title("Sepal Length vs Petal Length")
+plt.xlabel("Sepal Length")
+plt.ylabel("Petal Length")
+plt.show()
+
+sns.barplot(x='Species', y='sepal width (cm)', data=df)
+plt.title("Species vs Average Sepal Width")
+plt.show()
+
+
+# Pairplot
+
+
+sns.pairplot(df, hue='Species')
+plt.show()
+
+
+# Split Data into Train and Test
+
+
+X = df.drop('Species', axis=1)
+y = df['Species']
+
+X_train, X_test, y_train, y_test = train_test_split(
+    X, y, test_size=0.2, random_state=42
+)
+
+
+# Feature Scaling
+
+scaler = StandardScaler()
+
+X_train = scaler.fit_transform(X_train)
+X_test = scaler.transform(X_test)
+
+
+# KNN Accuracy for Different K Values
+
+k_values = range(1,11)
+acc_list = []
+
+for k in k_values:
+    model = KNeighborsClassifier(n_neighbors=k)
+    model.fit(X_train, y_train)
+    pred = model.predict(X_test)
+    acc_list.append(accuracy_score(y_test, pred))
+
+plt.plot(k_values, acc_list, marker='o')
+plt.title("KNN Accuracy for Different K Values")
+plt.xlabel("K Value")
+plt.ylabel("Accuracy")
+plt.show()
+
+
+# Apply KNN Algorithm
+
+knn = KNeighborsClassifier(n_neighbors=5)
+knn.fit(X_train, y_train)
+
+y_pred_knn = knn.predict(X_test)
+
+knn_acc = accuracy_score(y_test, y_pred_knn)
+
+print("KNN Accuracy :", knn_acc)
+print(confusion_matrix(y_test, y_pred_knn))
+print(classification_report(y_test, y_pred_knn))
+
+
+
+# Apply Naive Bayes Algorithm
+
+nb = GaussianNB()
+nb.fit(X_train, y_train)
+
+y_pred_nb = nb.predict(X_test)
+
+nb_acc = accuracy_score(y_test, y_pred_nb)
+
+print("Naive Bayes Accuracy :", nb_acc)
+print(confusion_matrix(y_test, y_pred_nb))
+print(classification_report(y_test, y_pred_nb))
+
+
+# Comparison Graph
+
+
+models = ['KNN', 'Naive Bayes']
+accuracy = [knn_acc, nb_acc]
+
+plt.bar(models, accuracy)
+plt.title("Accuracy Comparison")
+plt.xlabel("Models")
+plt.ylabel("Accuracy")
+plt.show()
+
+plt.plot(models, accuracy, marker='o')
+plt.title("Performance Comparison")
+plt.xlabel("Models")
+plt.ylabel("Accuracy")
+plt.show()
+
+-------------------------------------------------------------------------------------------------------------------------------------------------
+# Assignment 3 DecisionTreeClassifier
+------------------------------------------------------------------------------------------------------------------------------------------------------
+# 1. Import Required Libraries
+
+import pandas as pd
+import numpy as np
+import matplotlib.pyplot as plt
+import seaborn as sns
+
+from sklearn.datasets import load_iris
+from sklearn.model_selection import train_test_split, KFold, cross_val_score
+from sklearn.preprocessing import StandardScaler
+from sklearn.tree import DecisionTreeClassifier, plot_tree
+from sklearn.metrics import accuracy_score, classification_report, confusion_matrix
+
+
+# 2. Load Iris Dataset
+
+iris = load_iris()
+
+X = iris.data
+y = iris.target
+
+df = pd.DataFrame(X, columns=iris.feature_names)
+df['Species'] = y
+
+print(df.head())
+
+
+# 3. Shape and Information
+
+print(df.shape)
+print(df.info())
+
+
+# 4. Check Null Values
+
+print(df.isnull().sum())
+
+df.fillna(df.mean(numeric_only=True), inplace=True)
+
+
+# 5. Correlation Heatmap
+
+plt.figure(figsize=(8,5))
+sns.heatmap(df.corr(), annot=True, cmap='coolwarm')
+plt.title("Correlation Heatmap")
+plt.show()
+
+
+# 6. Train Test Split
+
+X = df.drop('Species', axis=1)
+y = df['Species']
+
+X_train, X_test, y_train, y_test = train_test_split(
+    X, y, test_size=0.2, random_state=42
+)
+
+
+# 7. Feature Scaling
+
+scaler = StandardScaler()
+
+X_train = scaler.fit_transform(X_train)
+X_test = scaler.transform(X_test)
+
+
+# 8. Train Decision Tree Model
+
+model = DecisionTreeClassifier(
+    criterion='entropy',
+    max_depth=5,
+    random_state=42
+)
+
+model.fit(X_train, y_train)
+
+
+# 9. Prediction and Evaluation
+
+y_pred = model.predict(X_test)
+
+print("Accuracy :", accuracy_score(y_test, y_pred))
+
+print("\nClassification Report :\n")
+print(classification_report(y_test, y_pred))
+
+print("\nConfusion Matrix :\n")
+print(confusion_matrix(y_test, y_pred))
+
+
+# 10. K-Fold Cross Validation
+
+kfold = KFold(n_splits=5, shuffle=True, random_state=42)
+
+cv_scores = cross_val_score(model, X, y, cv=kfold)
+
+print("Cross Validation Scores :", cv_scores)
+print("Average Accuracy :", cv_scores.mean())
+
+
+# 11. Species Count Plot
+
+sns.countplot(x=df['Species'])
+plt.title("Species Distribution")
+plt.show()
+
+
+# 12. Decision Tree Graph
+
+plt.figure(figsize=(20,10))
+
+plot_tree(
+    model,
+    feature_names=X.columns,
+    class_names=iris.target_names,
+    filled=True
+)
+
+plt.show()
+
+--------------------------------------------------------------------------------------------------------------------------------------------------------
+# Assign 4 SVM
+------------------------------------------------------------------------------------------------------------------------------------------------------
+
+# 1. Import Required Libraries
+
+import pandas as pd
+import numpy as np
+import matplotlib.pyplot as plt
+import seaborn as sns
+
+from sklearn.model_selection import train_test_split
+from sklearn.preprocessing import StandardScaler
+from sklearn.svm import SVC
+from sklearn.tree import DecisionTreeClassifier
+from sklearn.metrics import accuracy_score, classification_report, confusion_matrix
+
+
+# 2. Load Dataset
+
+df = pd.read_csv("Social_Network_Ads.csv")
+
+print(df.head())
+
+
+# 3. Shape and Information
+
+print(df.shape)
+print(df.info())
+print(df.describe())
+
+
+# 4. Check Null Values
+
+print(df.isnull().sum())
+
+df.fillna(df.mean(numeric_only=True), inplace=True)
+
+
+# 5. Correlation Heatmap
+
+plt.figure(figsize=(8,5))
+sns.heatmap(df.corr(numeric_only=True), annot=True, cmap='coolwarm')
+plt.title("Correlation Heatmap")
+plt.show()
+
+
+# 6. Select Features and Target
+
+X = df[['Age', 'EstimatedSalary']]
+y = df['Purchased']
+
+
+# 7. Train Test Split
+
+X_train, X_test, y_train, y_test = train_test_split(
+    X, y, test_size=0.2, random_state=42
+)
+
+
+# 8. Feature Scaling
+
+scaler = StandardScaler()
+
+X_train = scaler.fit_transform(X_train)
+X_test = scaler.transform(X_test)
+
+
+# 9. Apply SVM Classifier
+
+svm = SVC(kernel='linear', random_state=42)
+
+svm.fit(X_train, y_train)
+
+y_pred_svm = svm.predict(X_test)
+
+svm_acc = accuracy_score(y_test, y_pred_svm)
+
+print("SVM Accuracy :", svm_acc)
+print(classification_report(y_test, y_pred_svm))
+print(confusion_matrix(y_test, y_pred_svm))
+
+
+# 10. Apply Decision Tree Classifier
+
+dt = DecisionTreeClassifier(criterion='entropy', random_state=42)
+
+dt.fit(X_train, y_train)
+
+y_pred_dt = dt.predict(X_test)
+
+dt_acc = accuracy_score(y_test, y_pred_dt)
+
+print("Decision Tree Accuracy :", dt_acc)
+print(classification_report(y_test, y_pred_dt))
+print(confusion_matrix(y_test, y_pred_dt))
+
+
+# 11. Accuracy Comparison Graph
+
+models = ['SVM', 'Decision Tree']
+accuracy = [svm_acc, dt_acc]
+
+plt.bar(models, accuracy)
+plt.title("Accuracy Comparison")
+plt.xlabel("Models")
+plt.ylabel("Accuracy")
+plt.show()
+
+plt.plot(models, accuracy, marker='o')
+plt.title("Performance Comparison")
+plt.xlabel("Models")
+plt.ylabel("Accuracy")
+plt.show()
+
+
+# 12. Count Plot of Purchased Column
+
+sns.countplot(x=df['Purchased'])
+plt.title("Purchased Distribution")
+plt.show()
+
+-----------------------------------------------------------------------------------------------------------------------------------------------------
+# Assign 5 ensemble_random_forest
+------------------------------------------------------------------------------------------------------------------------------------------------------
+# 1. Import Required Libraries
+
+import pandas as pd
+import numpy as np
+import matplotlib.pyplot as plt
+import seaborn as sns
+
+from sklearn.model_selection import train_test_split
+from sklearn.preprocessing import StandardScaler
+from sklearn.metrics import accuracy_score, classification_report, confusion_matrix
+
+from sklearn.tree import DecisionTreeClassifier
+from sklearn.ensemble import BaggingClassifier
+from sklearn.ensemble import AdaBoostClassifier
+from sklearn.ensemble import RandomForestClassifier
+from sklearn.ensemble import StackingClassifier
+from sklearn.linear_model import LogisticRegression
+from sklearn.neighbors import KNeighborsClassifier
+
+
+# 2. Load Dataset
+
+df = pd.read_csv("diabetes.csv")
+
+print(df.head())
+
+
+# 3. Shape and Information
+
+print(df.shape)
+print(df.info())
+print(df.describe())
+
+
+# 4. Check Null Values
+
+print(df.isnull().sum())
+
+df.fillna(df.mean(numeric_only=True), inplace=True)
+
+
+# 5. Correlation Heatmap
+
+plt.figure(figsize=(10,6))
+sns.heatmap(df.corr(), annot=True, cmap='coolwarm')
+plt.title("Correlation Heatmap")
+plt.show()
+
+
+# 6. Select Features and Target
+
+X = df.drop('Outcome', axis=1)
+y = df['Outcome']
+
+
+# 7. Train Test Split
+
+X_train, X_test, y_train, y_test = train_test_split(
+    X, y, test_size=0.2, random_state=42
+)
+
+
+# 8. Feature Scaling
+
+scaler = StandardScaler()
+
+X_train = scaler.fit_transform(X_train)
+X_test = scaler.transform(X_test)
+
+
+# 9. Bagging Classifier
+
+bag = BaggingClassifier(
+    estimator=DecisionTreeClassifier(),
+    n_estimators=50,
+    random_state=42
+)
+
+bag.fit(X_train, y_train)
+
+y_pred_bag = bag.predict(X_test)
+
+bag_acc = accuracy_score(y_test, y_pred_bag)
+
+print("Bagging Accuracy :", bag_acc)
+
+
+# 10. Boosting Classifier
+
+boost = AdaBoostClassifier(
+    n_estimators=50,
+    random_state=42
+)
+
+boost.fit(X_train, y_train)
+
+y_pred_boost = boost.predict(X_test)
+
+boost_acc = accuracy_score(y_test, y_pred_boost)
+
+print("Boosting Accuracy :", boost_acc)
+
+
+# 11. Random Forest Classifier
+
+rf = RandomForestClassifier(
+    n_estimators=100,
+    random_state=42
+)
+
+rf.fit(X_train, y_train)
+
+y_pred_rf = rf.predict(X_test)
+
+rf_acc = accuracy_score(y_test, y_pred_rf)
+
+print("Random Forest Accuracy :", rf_acc)
+
+
+# 12. Stacking Classifier
+
+base_models = [
+    ('dt', DecisionTreeClassifier()),
+    ('knn', KNeighborsClassifier())
+]
+
+stack = StackingClassifier(
+    estimators=base_models,
+    final_estimator=LogisticRegression()
+)
+
+stack.fit(X_train, y_train)
+
+y_pred_stack = stack.predict(X_test)
+
+stack_acc = accuracy_score(y_test, y_pred_stack)
+
+print("Stacking Accuracy :", stack_acc)
+
+
+# 13. Classification Report and Confusion Matrix
+
+print(classification_report(y_test, y_pred_rf))
+print(confusion_matrix(y_test, y_pred_rf))
+
+
+# 14. Accuracy Comparison Graph
+
+models = ['Bagging', 'Boosting', 'Random Forest', 'Stacking']
+accuracy = [bag_acc, boost_acc, rf_acc, stack_acc]
+
+plt.bar(models, accuracy)
+plt.title("Ensemble Model Accuracy Comparison")
+plt.xlabel("Models")
+plt.ylabel("Accuracy")
+plt.show()
+
+plt.plot(models, accuracy, marker='o')
+plt.title("Performance Comparison")
+plt.xlabel("Models")
+plt.ylabel("Accuracy")
+plt.show()
+
+
+# 15. Outcome Count Plot
+
+sns.countplot(x=df['Outcome'])
+plt.title("Diabetes Outcome Distribution")
+plt.show()
+
+-----------------------------------------------------------------------------------------------------------------------------------------------------
+# Assign 6 Clustering(with dataset)
+------------------------------------------------------------------------------------------------------------------------------------------------------
+
+# 1. Import Required Libraries
+
+import pandas as pd
+import numpy as np
+import matplotlib.pyplot as plt
+import seaborn as sns
+
+from sklearn.datasets import load_iris
+from sklearn.preprocessing import StandardScaler
+from sklearn.cluster import KMeans, SpectralClustering, DBSCAN
+from sklearn.metrics import silhouette_score
+
+
+# 2. Load Iris Dataset
+
+iris = load_iris()
+
+X = iris.data
+y = iris.target
+
+df = pd.DataFrame(X, columns=iris.feature_names)
+
+print(df.head())
+
+
+# 3. Shape and Dataset Information
+
+print(df.shape)
+print(df.info())
+print(df.describe())
+
+
+# 4. Check Null Values
+
+print(df.isnull().sum())
+
+df.fillna(df.mean(numeric_only=True), inplace=True)
+
+
+# 5. Correlation Heatmap
+
+plt.figure(figsize=(8,5))
+sns.heatmap(df.corr(), annot=True, cmap='coolwarm')
+plt.title("Correlation Heatmap")
+plt.show()
+
+
+# 6. Feature Scaling
+
+scaler = StandardScaler()
+
+X_scaled = scaler.fit_transform(df)
+
+
+# 7. K-Means Clustering
+
+kmeans = KMeans(n_clusters=3, random_state=42)
+
+kmeans_labels = kmeans.fit_predict(X_scaled)
+
+kmeans_score = silhouette_score(X_scaled, kmeans_labels)
+
+print("K-Means Silhouette Score :", kmeans_score)
+
+
+# 8. Spectral Clustering
+
+spectral = SpectralClustering(
+    n_clusters=3,
+    affinity='nearest_neighbors',
+    random_state=42
+)
+
+spectral_labels = spectral.fit_predict(X_scaled)
+
+spectral_score = silhouette_score(X_scaled, spectral_labels)
+
+print("Spectral Clustering Score :", spectral_score)
+
+
+# 9. DBSCAN Clustering
+
+dbscan = DBSCAN(eps=1.2, min_samples=5)
+
+dbscan_labels = dbscan.fit_predict(X_scaled)
+
+mask = dbscan_labels != -1
+
+dbscan_score = silhouette_score(
+    X_scaled[mask],
+    dbscan_labels[mask]
+)
+
+print("DBSCAN Score :", dbscan_score)
+
+
+# 10. Scatter Plot of K-Means
+
+plt.scatter(
+    X_scaled[:,0],
+    X_scaled[:,1],
+    c=kmeans_labels
+)
+
+plt.title("K-Means Clustering")
+plt.xlabel("Feature 1")
+plt.ylabel("Feature 2")
+plt.show()
+
+
+# 11. Scatter Plot of Spectral
+
+plt.scatter(
+    X_scaled[:,0],
+    X_scaled[:,1],
+    c=spectral_labels
+)
+
+plt.title("Spectral Clustering")
+plt.xlabel("Feature 1")
+plt.ylabel("Feature 2")
+plt.show()
+
+
+# 12. Scatter Plot of DBSCAN
+
+plt.scatter(
+    X_scaled[:,0],
+    X_scaled[:,1],
+    c=dbscan_labels
+)
+
+plt.title("DBSCAN Clustering")
+plt.xlabel("Feature 1")
+plt.ylabel("Feature 2")
+plt.show()
+
+
+# 13. Performance Comparison Graph
+
+models = ['K-Means', 'Spectral', 'DBSCAN']
+score = [kmeans_score, spectral_score, dbscan_score]
+
+plt.bar(models, score)
+plt.title("Clustering Performance Comparison")
+plt.xlabel("Models")
+plt.ylabel("Silhouette Score")
+plt.show()
+
+plt.plot(models, score, marker='o')
+plt.title("Performance Evaluation")
+plt.xlabel("Models")
+plt.ylabel("Silhouette Score")
+plt.show()
+
+-----------------------------------------------------------------------------------------------------------------------------------------------
+# Assign 6 Using Circle
+------------------------------------------------------------------------------------------------------------------------------------------------------
+
+# Import Required Libraries
+
+import numpy as np
+import pandas as pd
+import math
+import matplotlib.pyplot as plt
+import matplotlib
+
+# Set random seed for same output every time
+np.random.seed(42)
+
+
+# Function to Generate Circular Points
+# r = radius
+# n = number of points
+# Noise is added using normal distribution
+
+def PointsInCircum(r, n=100):
+    return [
+        (
+            math.cos(2 * math.pi / n * x) * r + np.random.normal(-30, 30),
+            math.sin(2 * math.pi / n * x) * r + np.random.normal(-30, 30)
+        )
+        for x in range(1, n + 1)
+    ]
+
+
+# Create Three Circular Rings
+
+df1 = pd.DataFrame(PointsInCircum(500, 1000))
+df2 = pd.DataFrame(PointsInCircum(300, 700))
+df3 = pd.DataFrame(PointsInCircum(100, 300))
+
+# Create Random Noise Points
+df_random = pd.DataFrame([
+    (np.random.randint(-600, 600),
+     np.random.randint(-600, 600))
+    for i in range(300)
+])
+
+# Combine All Data
+df = pd.concat([df1, df2, df3, df_random], ignore_index=True)
+
+
+# Plot Original Dataset
+
+plt.figure(figsize=(10,10))
+plt.scatter(df[0], df[1], s=15, color='black')
+
+plt.title('Dataset', fontsize=20)
+plt.xlabel('Feature 1', fontsize=14)
+plt.ylabel('Feature 2', fontsize=14)
+
+plt.show()
+
+
+# Apply K-Means Clustering
+
+from sklearn.cluster import KMeans
+
+k_means = KMeans(n_clusters=4, random_state=42)
+
+k_means.fit(df[[0,1]])
+
+# Store labels in dataframe
+df['KMeans_labels'] = k_means.labels_
+
+
+# Plot K-Means Clusters
+
+colors = ['yellow', 'red', 'blue', 'black']
+
+plt.figure(figsize=(10,10))
+
+plt.scatter(
+    df[0],
+    df[1],
+    c=df['KMeans_labels'],
+    cmap=matplotlib.colors.ListedColormap(colors),
+    s=15
+)
+
+plt.title('K-Means Clustering', fontsize=20)
+plt.xlabel('Feature 1', fontsize=14)
+plt.ylabel('Feature 2', fontsize=14)
+
+plt.show()
+
+
+# Apply DBSCAN Clustering (Default Parameters)
+
+from sklearn.cluster import DBSCAN
+
+dbscan = DBSCAN()
+
+dbscan.fit(df[[0,1]])
+
+# Store labels
+df['DBSCAN_labels'] = dbscan.labels_
+
+
+# Plot DBSCAN Result
+
+plt.figure(figsize=(10,10))
+
+plt.scatter(
+    df[0],
+    df[1],
+    c=df['DBSCAN_labels'],
+    cmap=matplotlib.colors.ListedColormap(colors),
+    s=15
+)
+
+plt.title('DBSCAN Clustering', fontsize=20)
+plt.xlabel('Feature 1', fontsize=14)
+plt.ylabel('Feature 2', fontsize=14)
+
+plt.show()
+
+
+# Find Nearest Neighbors for Choosing eps
+
+from sklearn.neighbors import NearestNeighbors
+
+neigh = NearestNeighbors(n_neighbors=2)
+
+nbrs = neigh.fit(df[[0,1]])
+
+distances, indices = nbrs.kneighbors(df[[0,1]])
+
+
+# Apply Optimized DBSCAN
+# eps = 30
+# min_samples = 6
+
+dbscan_opt = DBSCAN(eps=30, min_samples=6)
+
+dbscan_opt.fit(df[[0,1]])
+
+# Store labels
+df['DBSCAN_opt_labels'] = dbscan_opt.labels_
+
+# Count points in each cluster
+print(df['DBSCAN_opt_labels'].value_counts())
+
+
+# Plot Optimized DBSCAN Result
+
+plt.figure(figsize=(10,10))
+
+plt.scatter(
+    df[0],
+    df[1],
+    c=df['DBSCAN_opt_labels'],
+    cmap=matplotlib.colors.ListedColormap(colors),
+    s=15
+)
+
+plt.title('Optimized DBSCAN', fontsize=20)
+plt.xlabel('Feature 1', fontsize=14)
+plt.ylabel('Feature 2', fontsize=14)
+
+plt.show()
+
+------------------------------------------------------------------------------------------------------------------------------------------------------
+# Assign 7 Linear Regression
+------------------------------------------------------------------------------------------------------------------------------------------------------
+
+# 1. Import Required Libraries
+
+import pandas as pd
+import numpy as np
+import matplotlib.pyplot as plt
+import seaborn as sns
+
+from sklearn.model_selection import train_test_split
+from sklearn.preprocessing import StandardScaler
+from sklearn.linear_model import LogisticRegression
+from sklearn.metrics import accuracy_score
+from sklearn.metrics import classification_report
+from sklearn.metrics import confusion_matrix
+
+
+# 2. Load Dataset
+
+df = pd.read_csv("diabetes.csv")
+
+print(df.head())
+
+
+# 3. Shape and Information
+
+print(df.shape)
+print(df.info())
+print(df.describe())
+
+
+# 4. Check Null Values
+
+print(df.isnull().sum())
+
+df.fillna(df.mean(numeric_only=True), inplace=True)
+
+print(df.isnull().sum())
+
+
+# 5. Correlation Heatmap
+
+plt.figure(figsize=(10,6))
+sns.heatmap(df.corr(), annot=True, cmap='coolwarm')
+plt.title("Correlation Heatmap")
+plt.show()
+
+
+# 6. Univariate Analysis
+
+plt.hist(df['Glucose'])
+plt.title("Glucose Distribution")
+plt.xlabel("Glucose")
+plt.ylabel("Frequency")
+plt.show()
+
+sns.boxplot(x=df['BMI'])
+plt.title("BMI Boxplot")
+plt.show()
+
+
+# 7. Bivariate Analysis
+
+plt.scatter(df['Glucose'], df['Outcome'])
+plt.title("Glucose vs Outcome")
+plt.xlabel("Glucose")
+plt.ylabel("Outcome")
+plt.show()
+
+sns.barplot(x='Outcome', y='Age', data=df)
+plt.title("Outcome vs Average Age")
+plt.show()
+
+
+# 8. Select Features and Target
+
+X = df.drop('Outcome', axis=1)
+y = df['Outcome']
+
+
+# 9. Train Test Split
+
+X_train, X_test, y_train, y_test = train_test_split(
+    X, y, test_size=0.2, random_state=42
+)
+
+
+# 10. Feature Scaling
+
+scaler = StandardScaler()
+
+X_train = scaler.fit_transform(X_train)
+X_test = scaler.transform(X_test)
+
+
+# 11. Apply Logistic Regression
+
+model = LogisticRegression()
+
+model.fit(X_train, y_train)
+
+y_pred = model.predict(X_test)
+
+
+# 12. Performance Evaluation
+
+acc = accuracy_score(y_test, y_pred)
+
+print("Accuracy :", acc)
+
+print("\nClassification Report :\n")
+print(classification_report(y_test, y_pred))
+
+print("\nConfusion Matrix :\n")
+print(confusion_matrix(y_test, y_pred))
+
+
+# 13. Actual vs Predicted Graph
+
+plt.plot(y_test.values, label='Actual')
+plt.plot(y_pred, label='Predicted')
+
+plt.title("Actual vs Predicted")
+plt.xlabel("Index")
+plt.ylabel("Outcome")
+plt.legend()
+
+plt.show()
+
+
+# 14. Count Plot of Outcome
+
+sns.countplot(x=df['Outcome'])
+plt.title("Outcome Distribution")
+plt.show()
